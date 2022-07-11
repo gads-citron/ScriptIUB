@@ -1,0 +1,8 @@
+node_modules
+dist
+index.d.ts
+index.d.ts.map
+**/config.yml
+my-config.yml
+.npmrc
+state.json

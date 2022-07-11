@@ -1,0 +1,49 @@
+name: CD Docker Workflow
+
+on:
+  registry_package:
+    types:
+      - published
+      - updated
+    
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slack Notification In Progress
+        uses: rtCamp/action-slack-notify@master
+        env:
+          SLACK_CHANNEL: dev-tech-deployment
+          SLACK_COLOR: '#0050ac'
+          SLACK_ICON: https://citron.io/wp-content/uploads/ext-assets/bender_info.png
+          SLACK_MESSAGE: ':fire: :egg: ${{ github.event.repository.full_name }} deployment in progress...'
+          SLACK_TITLE: Deployment in progress
+          SLACK_USERNAME: Bender
+          SLACK_WEBHOOK: ${{ secrets.DEPLOY_TECH_SLACK_WEBHOOK }}
+      - uses: actions/checkout@v2
+      - name: Deployment
+        run: ./.github/scripts/deploy.sh
+        env:
+          EVENT: ${{ toJson(github.event) }}
+          BRANCH: ${{ github.event.package.package_version.target_commitish }}
+          TAG: ${{ github.event.package.package_version.tag_name }}
+      - name: Success Slack Notification
+        if: success()
+        uses: rtCamp/action-slack-notify@master
+        env:
+            SLACK_CHANNEL: dev-tech-deployment
+            SLACK_COLOR: '#00ff00'
+            SLACK_ICON: https://citron.io/wp-content/uploads/ext-assets/bender_success.png
+            SLACK_TITLE: ':white_check_mark: :hatched_chick: ${{ github.event.repository.full_name }} deployment SUCCEED'
+            SLACK_USERNAME: Bender
+            SLACK_WEBHOOK: ${{ secrets.DEPLOY_TECH_SLACK_WEBHOOK }}
+      - name: Failure Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@master
+        env:
+          SLACK_CHANNEL: dev-tech-deployment
+          SLACK_COLOR: '#aa0000'
+          SLACK_ICON: https://citron.io/wp-content/uploads/ext-assets/bender_fail.png
+          SLACK_TITLE: ':x: :fried_egg: ${{ github.event.repository.full_name }} deployment FAILED'
+          SLACK_USERNAME: Bender
+          SLACK_WEBHOOK: ${{ secrets.DEPLOY_TECH_SLACK_WEBHOOK }}
